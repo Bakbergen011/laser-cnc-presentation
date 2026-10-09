@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SENFENG NP 3015 | Лазерлік CNC станогын автоматтандыру</title>
+  <meta name="description" content="Лазерлік CNC станогын автоматтандыру - SENFENG NP Series 3015 Fiber Laser Sheet Cutter Engineering Digital Twin">
+
+  <!-- Google Fonts: Orbitron, Rajdhani, JetBrains Mono, Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome for industrial icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <!-- External Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/3d.css">
+  <link rel="stylesheet" href="css/scada.css">
+  <link rel="stylesheet" href="css/presentation.css">
+</head>
+<body class="dark-theme">
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="loading-screen">
+    <div class="loader-content">
+      <div class="loader-brand">
+        <div class="brand-logo"><i class="fa-solid fa-atom"></i></div>
+        <div class="brand-text">
+          <h2>SENFENG <span class="accent-orange">NP SERIES</span></h2>
+          <p>ИНЖЕНЕРЛІК ДИДЖИТАЛ ЕГІЗ (DIGITAL TWIN) // АВТОМАТТАНДЫРУ</p>
+        </div>
+      </div>
+      <div class="loader-progress-bar">
+        <div id="loader-progress-fill" class="loader-progress-fill"></div>
+      </div>
+      <div class="loader-status">
+        <span id="loader-status-text">3D модель мен автоматтандыру архитектурасын жүктеу...</span>
+        <span id="loader-percentage">0%</span>
+      </div>
+      <div class="loader-specs">
+        <span><i class="fa-solid fa-microchip"></i> PLC: EtherCAT 1ms</span>
+        <span><i class="fa-solid fa-bolt"></i> Laser: 3–12 kW IPG/Raycus</span>
+        <span><i class="fa-solid fa-arrows-to-dot"></i> DNP: 3050×1530 mm</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Canvas Container for 3D Machine -->
+  <div id="canvas-container" class="canvas-container"></div>
+
+  <!-- Top Main Navigation Bar -->
+  <header class="top-nav">
+    <div class="nav-left">
+      <div class="machine-badge">
+        <span class="pulse-dot"></span>
+        <span class="badge-title">SENFENG 3015NP</span>
+        <span class="badge-sub">FIBER LASER CNC</span>
+      </div>
+      <div class="project-title-header">
+        <h1>Лазерлік CNC станогын автоматтандыру</h1>
+      </div>
+    </div>
+
+    <!-- Mode Selector Tabs -->
+    <nav class="nav-center">
+      <button class="nav-btn active" data-mode="hero"><i class="fa-solid fa-cube"></i> <span>3D КӨРІНІС</span></button>
+      <button class="nav-btn" data-mode="architecture"><i class="fa-solid fa-network-wired"></i> <span>АРХИТЕКТУРА</span></button>
+      <button class="nav-btn" data-mode="sensors"><i class="fa-solid fa-gauge-high"></i> <span>СЕНСОРЛАР</span></button>
+      <button class="nav-btn" data-mode="control"><i class="fa-solid fa-microchip"></i> <span>CNC & СЕРВО</span></button>
+      <button class="nav-btn" data-mode="scada"><i class="fa-solid fa-chart-line"></i> <span>SCADA/HMI</span></button>
+      <button class="nav-btn" data-mode="safety"><i class="fa-solid fa-shield-halved"></i> <span>ҚАУІПСІЗДІК</span></button>
+      <button class="nav-btn" data-mode="autocycle"><i class="fa-solid fa-play"></i> <span>АВТО-ЦИКЛ</span></button>
+      <button class="nav-btn" data-mode="faults"><i class="fa-solid fa-triangle-exclamation"></i> <span>АҚАУЛАР</span></button>
+      <button class="nav-btn" data-mode="presentation"><i class="fa-solid fa-person-chalkboard"></i> <span>ПРЕЗЕНТАЦИЯ</span></button>
+    </nav>
+
+    <div class="nav-right">
+      <!-- Audio Toggle -->
+      <button id="sound-toggle-btn" class="icon-action-btn" title="Дыбыс әсерлері"><i class="fa-solid fa-volume-high"></i></button>
+      <!-- HMI Operator Station Shortcut -->
+      <button id="hmi-open-btn" class="action-btn" onclick="app.toggleHmiModal()" title="HMI Өнеркәсіптік операторлық компьютер"><i class="fa-solid fa-desktop"></i> <span>HMI МОНИТОР</span></button>
+      <!-- Explode / Layers View Toggle -->
+      <button id="explode-view-btn" class="action-btn highlight-btn"><i class="fa-solid fa-layer-group"></i> <span>ҚҰРЫЛЫМДЫ КӨРСЕТУ</span></button>
+      <!-- Engineering Mode Toggle -->
+      <button id="eng-mode-btn" class="icon-action-btn" title="Инженерлік режим (I/O & Diagnostics)"><i class="fa-solid fa-terminal"></i></button>
+    </div>
+  </header>
+
+  <!-- Quick Floating Collapsible Camera Toolbar -->
+  <aside class="camera-toolbar-wrapper">
+    <div class="cam-bar-flex">
+      <button id="cam-toggle-btn" class="cam-toggle-trigger" title="Камера көріністерін ашу/жабу">
+        <i class="fa-solid fa-video"></i>
+        <span class="cam-btn-text">КАМЕРА: <b id="current-cam-name">[01] FRONT</b></span>
+        <i class="fa-solid fa-chevron-down cam-chevron"></i>
+      </button>
+      <button id="cabinet-door-quick-btn" class="cam-toggle-trigger cabinet-quick-trigger" onclick="app.MachineBuilder?.toggleCabinetDoor()" title="Электр басқару шкафының есігін ашу/жабу">
+        <i class="fa-solid fa-door-open"></i>
+        <span class="cam-btn-text" id="cam-cabinet-door-label">ШКАФТЫ АШУ</span>
+      </button>
+    </div>
+    <div id="cam-dropdown-menu" class="camera-dropdown glass-panel hidden">
+      <div class="toolbar-label"><i class="fa-solid fa-video"></i> ИНЖЕНЕРЛІК КАМЕРА РАКУРСТАРЫ</div>
+      <button class="cam-btn active" data-cam="overview" title="[01] FRONT — Алдыңғы жалпы көрініс"><i class="fa-solid fa-cube"></i> [01] FRONT</button>
+      <button class="cam-btn" data-cam="top" title="[02] TOP — Үстінен көрініс"><i class="fa-solid fa-square"></i> [02] TOP</button>
+      <button class="cam-btn" data-cam="side" title="[03] SIDE — Бүйірлік профиль"><i class="fa-solid fa-arrows-left-right"></i> [03] SIDE</button>
+      <button class="cam-btn" data-cam="head" title="[04] CUTTING HEAD — Кескіш бас және Z-осі"><i class="fa-solid fa-bullseye"></i> [04] CUTTING HEAD</button>
+      <button class="cam-btn" data-cam="cabinet" title="[05] ELECTRICAL CABINET — Электр басқару шкафы"><i class="fa-solid fa-server"></i> [05] ELECTRICAL CABINET</button>
+      <button class="cam-btn" data-cam="gantry" title="[06] SERVO SYSTEM — Сервожетектік жүйе"><i class="fa-solid fa-crosshairs"></i> [06] SERVO SYSTEM</button>
+      <button class="cam-btn" data-cam="station" title="[07] OPERATOR STATION — Оператор бекеті"><i class="fa-solid fa-desktop"></i> [07] OPERATOR STATION</button>
+    </div>
+  </aside>
+
+  <!-- Dynamic HUD Overlay Container for different modes -->
+  <main id="ui-overlay" class="ui-overlay">
+
+    <!-- ==================== 1. HERO VIEW HUD ==================== -->
+    <section id="hero-hud" class="hud-view active">
+      <!-- Top-left machine branding card -->
+      <div class="hud-panel hero-brand-card glass-panel">
+        <div class="card-badge"><i class="fa-solid fa-industry"></i> ӨНЕРКӘСІПТІК ЦИФРЛЫҚ ЕГІЗ</div>
+        <h2 class="hero-title">ЛАЗЕРЛІК CNC<br>СТАНОГЫН<br>АВТОМАТТАНДЫРУ</h2>
+        <p class="hero-subtitle">SENFENG NP SERIES INDUSTRIAL AUTOMATION SYSTEM</p>
+        <div class="automation-tag">
+          <i class="fa-solid fa-microchip"></i> Өнеркәсіптік цифрлық егіз және кешенді басқару архитектурасы
+        </div>
+        
+        <!-- Live Quick Specs Matrix -->
+        <div class="spec-matrix">
+          <div class="spec-item">
+            <span class="spec-label">ЛАЗЕР ҚУАТЫ</span>
+            <span class="spec-value" id="hud-power-val">6.0 <small>kW</small></span>
+            <span class="spec-sub">3–12 kW диапазоны</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">ЖҰМЫС АЙМАҒЫ</span>
+            <span class="spec-value">3050×1530 <small>mm</small></span>
+            <span class="spec-sub">3015NP стандарты</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">МАКС ЖЫЛДАМДЫҚ</span>
+            <span class="spec-value">120 <small>m/min</small></span>
+            <span class="spec-sub">Үдеу: 1.2 G</span>
+          </div>
+          <div class="spec-item">
+            <span class="spec-label">ДӘЛДІК (X/Y)</span>
+            <span class="spec-value">±0.05 <small>mm</small></span>
+            <span class="spec-sub">Қайталану: ±0.02 mm</span>
+          </div>
+        </div>
+
+        <div class="hero-quick-actions">
+          <button class="hero-cta-btn" onclick="app.switchMode('control')"><i class="fa-solid fa-gamepad"></i> ҚОЛМЕН БАСҚАРУ (JOG)</button>
+          <button class="hero-cta-btn secondary" onclick="app.switchMode('autocycle')"><i class="fa-solid fa-wand-magic-sparkles"></i> АВТО-КЕСУ ЦИКЛІ</button>
+        </div>
+      </div>
+
+      <!-- Live Machine Status Bar (Bottom) -->
+      <div class="hud-panel status-ribbon glass-panel">
+        <div class="ribbon-col">
+          <span class="ribbon-title">REAL-TIME STATUS:</span>
+          <div class="status-chips-wrap">
+            <span class="status-pill status-ready" id="status-chip-machine"><i class="fa-solid fa-circle-check"></i> MACHINE READY</span>
+            <span class="status-pill status-ready" id="status-chip-cnc"><i class="fa-solid fa-ethernet"></i> CNC ONLINE</span>
+            <span class="status-pill status-ready" id="status-chip-servo"><i class="fa-solid fa-bolt"></i> SERVO ACTIVE</span>
+            <span class="status-pill status-ready" id="status-chip-safety"><i class="fa-solid fa-shield-halved"></i> SAFETY OK</span>
+            <span class="status-pill status-standby" id="status-chip-laser"><i class="fa-solid fa-sun"></i> LASER STANDBY</span>
+          </div>
+        </div>
+        <div class="ribbon-col">
+          <span class="ribbon-title">ОСЬТЕР ПОЗИЦИЯСЫ:</span>
+          <div class="coord-group">
+            <span class="coord-chip">X: <b id="pos-x-val">1250.42</b> mm</span>
+            <span class="coord-chip">Y: <b id="pos-y-val">620.18</b> mm</span>
+            <span class="coord-chip">Z: <b id="pos-z-val">1.00</b> mm</span>
+          </div>
+        </div>
+        <div class="ribbon-col">
+          <span class="ribbon-title">АВТОМАТТАНДЫРУ ПАРАМЕТРЛЕРІ:</span>
+          <div class="param-group">
+            <span class="param-chip"><i class="fa-solid fa-temperature-three-quarters text-cyan"></i> T_Chiller: <b id="hud-chiller-temp">22.4</b>°C</span>
+            <span class="param-chip"><i class="fa-solid fa-wind text-green"></i> P_Gas: <b id="hud-gas-press">8.2</b> bar (<span id="hud-gas-type">N2</span>)</span>
+            <span class="param-chip"><i class="fa-solid fa-ruler-vertical text-orange"></i> Gap: <b id="hud-gap-val">1.02</b> mm</span>
+          </div>
+        </div>
+        <div class="ribbon-col">
+          <span class="ribbon-title">БАЙЛАНЫС ШИНАСЫ:</span>
+          <span class="bus-badge"><i class="fa-solid fa-ethernet text-green"></i> EtherCAT 100 Mbps (SYNC: 1.0 ms)</span>
+        </div>
+      </div>
+
+      <!-- Quick Interactive Tip -->
+      <div class="interaction-hint">
+        <i class="fa-solid fa-hand-pointer"></i> 3D модельдегі кез келген бөлшекті (серво, лазер бас, шкаф, чиллер) басып инженерлік сипаттамасын ашыңыз
+      </div>
+    </section>
+
+    <!-- ==================== 2. COMPONENT DETAILS MODAL / DRAWER ==================== -->
+    <div id="component-drawer" class="component-drawer glass-panel">
+      <button class="drawer-close-btn" id="drawer-close-btn"><i class="fa-solid fa-xmark"></i></button>
+      <div class="drawer-header">
+        <div class="drawer-badge" id="comp-type-badge">ИНЖЕНЕРЛІК БӨЛШЕК</div>
+        <h3 id="comp-title">Компонент атауы</h3>
+        <p id="comp-subtitle" class="comp-subtitle">Өнеркәсіптік құрылғы және міндеті</p>
+      </div>
+
+      <div class="drawer-body">
+        <div class="info-block">
+          <h4><i class="fa-solid fa-microchip"></i> Автоматтандырудағы қызметі (Function)</h4>
+          <p id="comp-role">Сипаттамасы...</p>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-cell">
+            <span class="cell-label">ҚҰРЫЛҒЫ ТҮРІ (TYPE)</span>
+            <span class="cell-val highlight" id="comp-signal-type">AC Servo / Industrial Drive</span>
+          </div>
+          <div class="info-cell">
+            <span class="cell-label">БАСҚАРУ ЖҮЙЕСІ (CONTROL)</span>
+            <span class="cell-val" id="comp-voltage">Servo Drive / PLC</span>
+          </div>
+          <div class="info-cell">
+            <span class="cell-label">КЕРІ БАЙЛАНЫС (FEEDBACK)</span>
+            <span class="cell-val" id="comp-direction">23-bit Optical Encoder</span>
+          </div>
+          <div class="info-cell">
+            <span class="cell-label">ДӘЛДІК (ACCURACY)</span>
+            <span class="cell-val" id="comp-spec">Closed-Loop (±0.01 mm)</span>
+          </div>
+        </div>
+
+        <div class="info-block signal-flow-box">
+          <h4><i class="fa-solid fa-route"></i> Сигнал тізбегіндегі орны</h4>
+          <div class="signal-chain" id="comp-signal-chain">
+            <span class="chain-node">Датчик</span>
+            <i class="fa-solid fa-arrow-right"></i>
+            <span class="chain-node active">Компонент</span>
+            <i class="fa-solid fa-arrow-right"></i>
+            <span class="chain-node">CNC / PLC</span>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <h4><i class="fa-solid fa-shield-virus"></i> Диагностика және қауіпсіздік</h4>
+          <p id="comp-safety-note" class="safety-text">Қауіпсіздік талаптары...</p>
+        </div>
+
+        <div class="drawer-actions">
+          <button class="drawer-action-btn" id="comp-test-btn"><i class="fa-solid fa-bolt"></i> Сигналды тесттеу</button>
+          <button class="drawer-action-btn secondary" id="comp-cam-focus-btn"><i class="fa-solid fa-magnifying-glass-plus"></i> Фокустау</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 3. 3D EXPLODE / LAYERS PANEL ==================== -->
+    <div id="layers-panel" class="layers-panel glass-panel hidden">
+      <div class="panel-header">
+        <div class="panel-title"><i class="fa-solid fa-layer-group"></i> СТАНОК ҚҰРЫЛЫМДЫҚ ҚАБАТТАРЫ</div>
+        <button class="panel-close-btn" onclick="app.toggleExplodeView()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="panel-desc">Станоктың 8 негізгі жүйесін қабат бойынша бөліп көру және сигнал байланыстарын зерттеу:</p>
+      
+      <div class="layers-list">
+        <div class="layer-item active" data-layer="1">
+          <span class="layer-num">01</span>
+          <div class="layer-info">
+            <span class="layer-name">Механикалық станина және портал</span>
+            <span class="layer-tag">Mechanical Bed & Carbon-free Gantry</span>
+          </div>
+          <input type="checkbox" checked class="layer-toggle" data-layer="1">
+        </div>
+
+        <div class="layer-item active" data-layer="2">
+          <span class="layer-num">02</span>
+          <div class="layer-info">
+            <span class="layer-name">Сервожетектік қозғалыс жүйесі (X/Y/Z)</span>
+            <span class="layer-tag">AC Servo + Dual Y-drive + Planetary Gear</span>
+          </div>
+          <input type="checkbox" checked class="layer-toggle" data-layer="2">
+        </div>
+
+        <div class="layer-item active" data-layer="3">
+          <span class="layer-num">03</span>
+          <div class="layer-info">
+            <span class="layer-name">Талшықты лазерлік оптикалық жүйе</span>
+            <span class="layer-tag">Fiber Laser Source + Auto-focus Head + Optics</span>
+          </div>
+          <input type="checkbox" checked class="layer-toggle" data-layer="3">
+        </div>
+
+        <div class="layer-item active" data-layer="4">
+          <span class="layer-num">04</span>
+          <div class="layer-info">
+            <span class="layer-name">Пневматикалық көмекші газ жүйесі</span>
+            <span class="layer-tag">O2/N2/Air Proportional Valves & Solenoids</span>
+          </div>
+          <input type="checkbox" checked class="layer-toggle" data-layer="4">
+        </div>
+
+        <div class="layer-item active" data-layer="5">
+          <span class="layer-num">05</span>
+          <div class="layer-info">
+            <span class="layer-name">Екі контурлы чиллер салқындату жүйесі</span>
+            <span class="layer-tag">Dual-Circuit Water Chiller + Flow Sensors</span>
+          </div>
+          <input type="checkbox" checked class="layer-toggle" data-layer="5">
+        </div>
+
+        <div class="layer-item active" data-layer="6">
+          <span class="layer-num">06</span>
+          <div class="layer-info">
+            <span class="layer-name">Сенсорлар және өлшеуіш аспаптары</span>
+            <span class="layer-tag">Capacitive Height, Encoders, Limit Inductive</span>
+          </div>
+          <input type="checkbox" checked class="layer-toggle" data-layer="6">
+        </div>
+
+        <div class="layer-item active" data-layer="7">
+          <span class="layer-num">07</span>
+          <div class="layer-info">
+            <span class="layer-name">CNC контроллер және PLC басқару логикасы</span>
+            <span class="layer-tag">Real-Time CNC + EtherCAT Master + Remote I/O</span>
+          </div>
+          <input type="checkbox" checked class="layer-toggle" data-layer="7">
+        </div>
+
+        <div class="layer-item active" data-layer="8">
+          <span class="layer-num">08</span>
+          <div class="layer-info">
+            <span class="layer-name">Аппараттық қауіпсіздік жүйесі (STO & E-Stop)</span>
+            <span class="layer-tag">Safety Relay + Dual Channel E-Stop + Interlocks</span>
+          </div>
+          <input type="checkbox" checked class="layer-toggle" data-layer="8">
+        </div>
+      </div>
+
+      <div class="explode-slider-box">
+        <label>ҚАБАТТАРДЫ ЫДЫРАТУ (EXPLODE DISTANCE):</label>
+        <input type="range" id="explode-slider" min="0" max="100" value="70">
+      </div>
+    </div>
+
+    <!-- ==================== 4. ARCHITECTURE & SIGNAL FLOW VIEW ==================== -->
+    <section id="architecture-hud" class="hud-view">
+      <div class="arch-container glass-panel">
+        <div class="arch-header">
+          <div>
+            <h2><i class="fa-solid fa-network-wired"></i> АВТОМАТТАНДЫРУ АРХИТЕКТУРАСЫ ЖӘНЕ СИГНАЛДАР АҒЫНЫ</h2>
+            <p>Сенсордан бастап атқарушы механизмге дейінгі толық циклді басқару контуры. Әрбір блокты басып сигнал деңгейін қараңыз:</p>
+          </div>
+          <button class="action-btn highlight-btn" onclick="app.MachineBuilder?.toggleCabinetDoor(); CameraController.flyTo('cabinet', 1.2);" title="3D Электр шкафының есігін ашу немесе жабу">
+            <i class="fa-solid fa-door-open"></i> <span>ШКАФТЫ АШУ / ЖАБУ (OPEN CABINET)</span>
+          </button>
+        </div>
+
+        <!-- Power vs Control vs Cabinet Tabs -->
+        <div class="arch-tabs">
+          <button class="arch-tab-btn active" data-tab="signals"><i class="fa-solid fa-wave-square"></i> Сигналдар тізбегі (Control Flow)</button>
+          <button class="arch-tab-btn" data-tab="cabinet-view"><i class="fa-solid fa-server"></i> Электр басқару шкафы (Electrical Cabinet)</button>
+          <button class="arch-tab-btn" data-tab="power-control"><i class="fa-solid fa-bolt-lightning"></i> Күштік (380V) vs Басқару (24V) бөлінісі</button>
+        </div>
+
+        <!-- Tab 1: Interactive Flow Diagram -->
+        <div id="arch-tab-signals" class="arch-tab-content active">
+          <div class="flow-diagram-wrapper">
+            <div class="flow-step-card" data-step="sensor">
+              <div class="step-badge">INPUT</div>
+              <div class="step-icon"><i class="fa-solid fa-gauge-high text-cyan"></i></div>
+              <h4>СЕНСОРЛАР (SENSORS)</h4>
+              <p>Сыйымдылықты биіктік датчигі, Энкодер, Термодатчиктер, Қысым датчигі</p>
+              <div class="signal-tag ai">AI / DI / BiSS-C</div>
+            </div>
+
+            <div class="flow-arrow-animated"><i class="fa-solid fa-angles-right"></i><span>4-20mA / 0-10V</span></div>
+
+            <div class="flow-step-card" data-step="conditioning">
+              <div class="step-badge">CONVERSION</div>
+              <div class="step-icon"><i class="fa-solid fa-filter text-blue"></i></div>
+              <h4>СИГНАЛДЫ ӨҢДЕУ & I/O</h4>
+              <p>Гальваникалық оқшаулау, АЦП/ЦАП модульдері, Фильтрлеу</p>
+              <div class="signal-tag dio">24V DC Optocoupled</div>
+            </div>
+
+            <div class="flow-arrow-animated"><i class="fa-solid fa-angles-right"></i><span>EtherCAT Bus</span></div>
+
+            <div class="flow-step-card" data-step="controller">
+              <div class="step-badge">CORE LOGIC</div>
+              <div class="step-icon"><i class="fa-solid fa-microchip text-orange"></i></div>
+              <h4>PLC / CNC КОНТРОЛЛЕР</h4>
+              <p>G-код интерпретаторы, PID биіктік реттегіші, Интерполяция алгоритмі</p>
+              <div class="signal-tag bus">Cyclic Sync 1ms</div>
+            </div>
+
+            <div class="flow-arrow-animated"><i class="fa-solid fa-angles-right"></i><span>Drive Commands</span></div>
+
+            <div class="flow-step-card" data-step="drive">
+              <div class="step-badge">POWER DRIVE</div>
+              <div class="step-icon"><i class="fa-solid fa-car-battery text-purple"></i></div>
+              <h4>СЕРВОДРАЙВ (SERVO DRIVE)</h4>
+              <p>IGBT инвертор, Ток/Жылдамдық/Орын контурлары, STO қауіпсіздік</p>
+              <div class="signal-tag pwr">PWM 380V AC</div>
+            </div>
+
+            <div class="flow-arrow-animated"><i class="fa-solid fa-angles-right"></i><span>Torque / Motion</span></div>
+
+            <div class="flow-step-card" data-step="actuator">
+              <div class="step-badge">ACTUATOR</div>
+              <div class="step-icon"><i class="fa-solid fa-gears text-yellow"></i></div>
+              <h4>СЕРВОМОТОР ЖӘНЕ МЕХАНИЗМ</h4>
+              <p>X/Y редуктор-рейка, Z ШВП, Лазерлік бастиек фокусы</p>
+              <div class="signal-tag mech">120 m/min, 1.2G</div>
+            </div>
+          </div>
+
+          <!-- Closed loop feedback reverse line -->
+          <div class="closed-loop-feedback-bar">
+            <div class="feedback-badge"><i class="fa-solid fa-rotate-left"></i> ЖАБЫҚ КЕРІ БАЙЛАНЫС КОНТУРЫ (CLOSED-LOOP ENCODER & CAPACITIVE FEEDBACK)</div>
+            <p>23-bit Абсолютті энкодер нақты орынды 1 мс сайын контроллерге қайтарады. Орын қателігі: <b>Δ = Setpoint - Feedback → 0.00 mm</b></p>
+          </div>
+        </div>
+
+        <!-- Tab 2: Dedicated Electrical Cabinet Architecture & 3 Animated Flows -->
+        <div id="arch-tab-cabinet" class="arch-tab-content">
+          <div class="cabinet-arch-wrapper">
+            <div class="cabinet-arch-banner">
+              <div>
+                <h3><i class="fa-solid fa-server text-cyan"></i> ЭЛЕКТР БАСҚАРУ ШКАФЫНЫҢ ИНЖЕНЕРЛІК СҰЛБАСЫ</h3>
+                <p>380V күштік тарату, 24V тұрақты басқару, қауіпсіздік контуры және серводрайверлер кластері</p>
+              </div>
+              <button class="action-btn highlight-btn" onclick="app.MachineBuilder?.toggleCabinetDoor(); CameraController.flyTo('cabinet', 1.2);">
+                <i class="fa-solid fa-door-open"></i> ШКАФТЫ 3D АШУ / ЖАБУ
+              </button>
+            </div>
+
+            <!-- 3 Animated Signal/Power Sequences -->
+            <div class="cabinet-flows-grid">
+              <!-- Flow 1: POWER -->
+              <div class="cabinet-flow-card">
+                <div class="flow-card-head power-head">
+                  <span class="flow-num">01</span>
+                  <h4><i class="fa-solid fa-bolt"></i> POWER FLOW (КҮШТІК ЖЕЛІ)</h4>
+                </div>
+                <div class="flow-nodes-vertical">
+                  <div class="c-node"><span class="c-tag">INPUT</span> <strong>380V AC (3-Phase)</strong></div>
+                  <div class="c-connector animated-pulse-pwr"><i class="fa-solid fa-arrow-down"></i></div>
+                  <div class="c-node"><span class="c-tag">PROTECTION</span> <strong>Main Breaker (QF1)</strong></div>
+                  <div class="c-connector animated-pulse-pwr"><i class="fa-solid fa-arrow-down"></i></div>
+                  <div class="c-node"><span class="c-tag">CONVERSION</span> <strong>Power Supply (24V DC / 10A)</strong></div>
+                  <div class="c-connector animated-pulse-pwr"><i class="fa-solid fa-arrow-down"></i></div>
+                  <div class="c-node highlight"><span class="c-tag">DRIVES</span> <strong>Servo Drives Cluster (X/Y1/Y2/Z)</strong></div>
+                </div>
+              </div>
+
+              <!-- Flow 2: CONTROL -->
+              <div class="cabinet-flow-card">
+                <div class="flow-card-head control-head">
+                  <span class="flow-num">02</span>
+                  <h4><i class="fa-solid fa-microchip"></i> CONTROL FLOW (БАСҚАРУ АҒЫНЫ)</h4>
+                </div>
+                <div class="flow-nodes-vertical">
+                  <div class="c-node"><span class="c-tag">INPUT</span> <strong>Sensors (Height, Press, Limits)</strong></div>
+                  <div class="c-connector animated-pulse-ctrl"><i class="fa-solid fa-arrow-down"></i></div>
+                  <div class="c-node"><span class="c-tag">BRAIN</span> <strong>PLC / CNC Controller (1ms Sync)</strong></div>
+                  <div class="c-connector animated-pulse-ctrl"><i class="fa-solid fa-arrow-down"></i></div>
+                  <div class="c-node"><span class="c-tag">BUS</span> <strong>Servo Drive (EtherCAT CSP)</strong></div>
+                  <div class="c-connector animated-pulse-ctrl"><i class="fa-solid fa-arrow-down"></i></div>
+                  <div class="c-node highlight"><span class="c-tag">MOTION</span> <strong>Servo Motor (Torque / Speed)</strong></div>
+                </div>
+              </div>
+
+              <!-- Flow 3: FEEDBACK -->
+              <div class="cabinet-flow-card">
+                <div class="flow-card-head feedback-head">
+                  <span class="flow-num">03</span>
+                  <h4><i class="fa-solid fa-rotate-left"></i> FEEDBACK FLOW (КЕРІ БАЙЛАНЫС)</h4>
+                </div>
+                <div class="flow-nodes-vertical">
+                  <div class="c-node"><span class="c-tag">SENSOR</span> <strong>Optical Encoder (23-bit Serial)</strong></div>
+                  <div class="c-connector animated-pulse-fb"><i class="fa-solid fa-arrow-down"></i></div>
+                  <div class="c-node"><span class="c-tag">DSP</span> <strong>Servo Drive (Current / Position Loop)</strong></div>
+                  <div class="c-connector animated-pulse-fb"><i class="fa-solid fa-arrow-down"></i></div>
+                  <div class="c-node highlight"><span class="c-tag">CLOSURE</span> <strong>CNC Controller (Error Correction)</strong></div>
+                  <div class="c-connector animated-pulse-fb"><i class="fa-solid fa-check"></i></div>
+                  <div class="c-node success"><span class="c-tag">RESULT</span> <strong>Δ = 0.00 mm (High Accuracy)</strong></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 9 Cabinet Components Showcase -->
+            <div class="cabinet-components-matrix">
+              <h4><i class="fa-solid fa-cubes text-cyan"></i> ШКАФ ІШІНДЕГІ 9 НЕГІЗГІ ӨНЕРКӘСІПТІК ҚҰРЫЛҒЫ (3D Interactive):</h4>
+              <div class="comp-pills-row">
+                <span class="c-pill" onclick="CameraController.flyTo('cabinet')"><i class="fa-solid fa-server"></i> PLC</span>
+                <span class="c-pill" onclick="CameraController.flyTo('cabinet')"><i class="fa-solid fa-microchip"></i> CNC</span>
+                <span class="c-pill" onclick="CameraController.flyTo('cabinet')"><i class="fa-solid fa-car-battery"></i> SERVO DRIVES</span>
+                <span class="c-pill" onclick="CameraController.flyTo('cabinet')"><i class="fa-solid fa-plug"></i> POWER SUPPLY</span>
+                <span class="c-pill" onclick="CameraController.flyTo('cabinet')"><i class="fa-solid fa-toggle-on"></i> BREAKERS</span>
+                <span class="c-pill" onclick="CameraController.flyTo('cabinet')"><i class="fa-solid fa-bolt"></i> CONTACTORS</span>
+                <span class="c-pill" onclick="CameraController.flyTo('cabinet')"><i class="fa-solid fa-shield-halved"></i> SAFETY RELAY</span>
+                <span class="c-pill" onclick="CameraController.flyTo('cabinet')"><i class="fa-solid fa-ethernet"></i> I/O MODULES</span>
+                <span class="c-pill" onclick="CameraController.flyTo('cabinet')"><i class="fa-solid fa-grip-lines"></i> TERMINAL BLOCKS</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Power vs Control Split Architecture -->
+        <div id="arch-tab-power" class="arch-tab-content">
+          <div class="split-architecture-grid">
+            <!-- Power Cabinet Layer (380V) -->
+            <div class="split-column power-side">
+              <div class="column-header">
+                <i class="fa-solid fa-bolt text-orange"></i>
+                <div>
+                  <h3>КҮШТІК БӨЛІМ (POWER LAYER - 380V AC)</h3>
+                  <span>Жоғары қуатты жүктемелер мен электр желісі</span>
+                </div>
+              </div>
+              <div class="split-list">
+                <div class="split-card">
+                  <h4><i class="fa-solid fa-plug"></i> 3-Фазалы 380V 50Hz Қоректендіру</h4>
+                  <p>Бас автомат, желілік сүзгі (EMC Line Filter), фаза релесі</p>
+                </div>
+                <div class="split-card">
+                  <h4><i class="fa-solid fa-sun text-yellow"></i> Талшықты лазер көзі (Fiber Laser 3–12 kW)</h4>
+                  <p>Жоғары қуатты модульдер, 380V қорек, дербес салқындату контуры</p>
+                </div>
+                <div class="split-card">
+                  <h4><i class="fa-solid fa-snowflake text-cyan"></i> Екі контурлы чиллер (Chiller 380V)</h4>
+                  <p>Компрессор және жоғары қысымды су сорғылары</p>
+                </div>
+                <div class="split-card">
+                  <h4><i class="fa-solid fa-car-battery text-purple"></i> X/Y1/Y2/Z Серводрайверлер</h4>
+                  <p>Түзеткіш көпір және үш фазалы IGBT инвертор күштік блогы</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Isolation Barrier -->
+            <div class="isolation-barrier">
+              <div class="barrier-line"></div>
+              <div class="barrier-label">
+                <i class="fa-solid fa-shield-halved"></i>
+                ГАЛЬВАНИКАЛЫҚ ЖӘНЕ ЭМҮ ОҚШАУЛАУ (EMC / ISOLATION BARRIER)
+              </div>
+              <div class="barrier-line"></div>
+            </div>
+
+            <!-- Control Cabinet Layer (24V) -->
+            <div class="split-column control-side">
+              <div class="column-header">
+                <i class="fa-solid fa-microchip text-blue"></i>
+                <div>
+                  <h3>БАСҚАРУ БӨЛІМІ (CONTROL LAYER - 24V DC)</h3>
+                  <span>Аса дәл өндірістік автоматика, PLC және микропроцессорлық басқару</span>
+                </div>
+              </div>
+              <div class="split-list">
+                <div class="split-card">
+                  <h4><i class="fa-solid fa-server text-blue"></i> CNC & PLC Басқару контроллері</h4>
+                  <p>24V DC импульстік қорек блогы, Real-Time операциялық жүйе</p>
+                </div>
+                <div class="split-card">
+                  <h4><i class="fa-solid fa-gauge text-cyan"></i> Өндірістік Датчиктер (AI / DI)</h4>
+                  <p>Сыйымдылықты биіктік датчигі (0-10V), Оптикалық шектегіштер (24V PNP)</p>
+                </div>
+                <div class="split-card">
+                  <h4><i class="fa-solid fa-desktop text-green"></i> HMI Өнеркәсіптік панелі мен SCADA</h4>
+                  <p>Оператор интерфейсі, G-кодты жүктеу, жүйе күйін мониторингтеу</p>
+                </div>
+                <div class="split-card">
+                  <h4><i class="fa-solid fa-shield text-red"></i> Қауіпсіздік релесі (Safety Circuit STO)</h4>
+                  <p>Аппараттық қос каналды E-Stop және есік блоктау тізбектері</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="arch-footer">
+          <span class="note-pill"><i class="fa-solid fa-circle-info"></i> Инженерлік монтаж қағидасы: Күштік 380V кабельдер мен сезімтал 24V/сигналдық сымдар бөлек экрандалған кабель-каналдар арқылы тартылады.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 5. SENSORS INTERACTIVE PANEL ==================== -->
+    <section id="sensors-hud" class="hud-view">
+      <div class="sensors-layout glass-panel">
+        <div class="sensors-left">
+          <div class="section-title-box">
+            <h3><i class="fa-solid fa-gauge-high"></i> ӨНДІРІСТІК СЕНСОРЛАР ЖӘНЕ ДАТЧИКТЕР КЕСТЕСІ</h3>
+            <p>Станоктағы барлық біріншілік өлшеуіш түрлендіргіштердің нақты уақыттағы көрсеткіштері (кесте қатарын басып карточкасын ашыңыз):</p>
+          </div>
+
+          <div class="table-responsive">
+            <table class="industrial-table" id="sensors-table">
+              <thead>
+                <tr>
+                  <th>СЕНСОР / ДАТЧИК</th>
+                  <th>ОРНАЛАСУЫ</th>
+                  <th>СИГНАЛ ТҮРІ</th>
+                  <th>ӨЛШЕМІ</th>
+                  <th>БІРЛІГІ</th>
+                  <th>КҮЙІ</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows populated by sensors.js -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Section 10: 4-Part Sensor Card (Sensor / Signal / Controller / Action) -->
+          <div id="sensor-four-part-card" class="sensor-four-part-card glass-panel">
+            <div class="card-head">
+              <i class="fa-solid fa-microchip text-cyan"></i>
+              <span class="card-head-title">СЕНСОР ИНЖЕНЕРЛІК КАРТОЧКАСЫ (SENSOR / SIGNAL / CONTROLLER / ACTION)</span>
+            </div>
+            <div class="four-parts-grid">
+              <div class="part-box">
+                <span class="part-label"><i class="fa-solid fa-tag"></i> SENSOR (ДАТЧИК)</span>
+                <strong class="part-value highlight" id="sensor-card-name">Сыйымдылықты биіктік датчигі (Capacitive BCS100)</strong>
+              </div>
+              <div class="part-box">
+                <span class="part-label"><i class="fa-solid fa-wave-square"></i> SIGNAL (СИГНАЛ)</span>
+                <strong class="part-value" id="sensor-card-signal">0-10V Analog (C ~ ε·A/d, 1.00 mm = 5.00V)</strong>
+              </div>
+              <div class="part-box">
+                <span class="part-label"><i class="fa-solid fa-server"></i> CONTROLLER (КОНТРОЛЛЕР)</span>
+                <strong class="part-value" id="sensor-card-controller">Z-Axis High-Speed DSP / Servo Driver</strong>
+              </div>
+              <div class="part-box">
+                <span class="part-label"><i class="fa-solid fa-gears"></i> ACTION (ӘРЕКЕТ)</span>
+                <strong class="part-value text-green" id="sensor-card-action">Автоматты фокус арақашықтығын сақтау (Z-коррекция)</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="sensors-right">
+          <!-- Interactive Height Sensor Deep Dive Demo -->
+          <div class="sensor-deep-dive-card">
+            <h4><i class="fa-solid fa-bullseye text-orange"></i> Сыйымдылықты биіктік датчигі (Capacitive Height Control)</h4>
+            <p>Кескіш сопло мен қаңылтыр металл арасындағы электр сыйымдылығы (C ~ ε·A/d) арқылы биіктікті 0.01 мм дәлдікпен өлшейді.</p>
+            
+            <div class="capacitive-sim-box">
+              <div class="cap-nozzle" id="sim-nozzle">
+                <div class="nozzle-tip"></div>
+                <div class="cap-field-waves"></div>
+              </div>
+              <div class="cap-sheet" id="sim-sheet"></div>
+            </div>
+
+            <div class="cap-metrics">
+              <div class="metric-item">
+                <span>ҚАШЫҚТЫҚ (GAP):</span>
+                <strong id="sim-gap-value">1.00 mm</strong>
+              </div>
+              <div class="metric-item">
+                <span>СЫЙЫМДЫЛЫҚ (C):</span>
+                <strong id="sim-cap-value">3.45 pF</strong>
+              </div>
+              <div class="metric-item">
+                <span>АНАЛОГ СИГНАЛ (AI):</span>
+                <strong id="sim-volt-value">5.00 V</strong>
+              </div>
+            </div>
+
+            <div class="cap-controls">
+              <button class="small-btn" onclick="sensorsApp.triggerSheetDeform(-0.5)">Металл майысуы (-0.5 mm)</button>
+              <button class="small-btn" onclick="sensorsApp.triggerSheetDeform(+0.8)">Металл дөңесі (+0.8 mm)</button>
+              <button class="small-btn highlight" onclick="sensorsApp.resetHeightAuto()">Авто-түзеу (Z-Correction)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 6. CNC / AXES / SERVO / CLOSED-LOOP VIEW ==================== -->
+    <section id="control-hud" class="hud-view">
+      <div class="control-grid">
+        
+        <!-- Left: Jogging & Coordinates Controller -->
+        <div class="control-panel glass-panel">
+          <div class="panel-header">
+            <h3><i class="fa-solid fa-gamepad"></i> X / Y / Z ҚОЛМЕН БАСҚАРУ (JOG & HOMING)</h3>
+            <span class="badge-mode">MANUAL / CNC</span>
+          </div>
+
+          <!-- Big Coordinates Readout -->
+          <div class="dro-display">
+            <div class="dro-axis">
+              <span class="axis-letter x-color">X</span>
+              <span class="axis-pos" id="dro-x">1250.420</span>
+              <span class="axis-unit">mm</span>
+              <span class="axis-state">DRIVE OK</span>
+            </div>
+            <div class="dro-axis">
+              <span class="axis-letter y-color">Y</span>
+              <span class="axis-pos" id="dro-y">620.180</span>
+              <span class="axis-unit">mm</span>
+              <span class="axis-state">SYNC DUAL</span>
+            </div>
+            <div class="dro-axis">
+              <span class="axis-letter z-color">Z</span>
+              <span class="axis-pos" id="dro-z">1.000</span>
+              <span class="axis-unit">mm</span>
+              <span class="axis-state">AUTO CAP</span>
+            </div>
+          </div>
+
+          <!-- Jog Button Matrix -->
+          <div class="jog-matrix-wrapper">
+            <div class="jog-xy-grid">
+              <div></div>
+              <button class="jog-btn" id="jog-y-plus"><i class="fa-solid fa-chevron-up"></i> Y+</button>
+              <div></div>
+              <button class="jog-btn" id="jog-x-minus"><i class="fa-solid fa-chevron-left"></i> X-</button>
+              <button class="jog-btn home-center" id="jog-home"><i class="fa-solid fa-house"></i> HOME</button>
+              <button class="jog-btn" id="jog-x-plus">X+ <i class="fa-solid fa-chevron-right"></i></button>
+              <div></div>
+              <button class="jog-btn" id="jog-y-minus"><i class="fa-solid fa-chevron-down"></i> Y-</button>
+              <div></div>
+            </div>
+
+            <!-- Z axis dedicated jog -->
+            <div class="jog-z-column">
+              <button class="jog-btn z-btn" id="jog-z-plus"><i class="fa-solid fa-arrow-up"></i> Z+ (Жоғары)</button>
+              <span class="z-label">Z Осі</span>
+              <button class="jog-btn z-btn" id="jog-z-minus"><i class="fa-solid fa-arrow-down"></i> Z- (Төмен)</button>
+            </div>
+          </div>
+
+          <!-- Speed & Feedrate Selector -->
+          <div class="jog-settings">
+            <label>ҚОЗҒАЛЫС ЖЫЛДАМДЫҒЫ (FEEDRATE): <b id="feedrate-val">60 m/min</b></label>
+            <input type="range" id="feedrate-slider" min="5" max="120" value="60">
+          </div>
+        </div>
+
+        <!-- Center: Closed-Loop Servo & PID Dynamic Demonstration -->
+        <div class="control-panel glass-panel">
+          <div class="panel-header">
+            <h3><i class="fa-solid fa-circle-nodes"></i> СЕРВОЖЕТЕК ЖӘНЕ ЭНКОДЕР: ЖАБЫҚ КОНТУР (CLOSED-LOOP)</h3>
+          </div>
+
+          <div class="closed-loop-diagram">
+            <div class="cl-node">
+              <span>SETPOINT</span>
+              <strong id="cl-setpoint">100.00 mm</strong>
+            </div>
+            <i class="fa-solid fa-arrow-right cl-arrow"></i>
+            <div class="cl-node">
+              <span>SERVO DRIVE</span>
+              <span>IGBT PWM</span>
+            </div>
+            <i class="fa-solid fa-arrow-right cl-arrow"></i>
+            <div class="cl-node">
+              <span>MOTOR & AXIS</span>
+              <span>AC Servo</span>
+            </div>
+            <i class="fa-solid fa-arrow-right cl-arrow"></i>
+            <div class="cl-node">
+              <span>ENCODER</span>
+              <strong id="cl-feedback">98.40 mm</strong>
+            </div>
+            <i class="fa-solid fa-arrow-right cl-arrow"></i>
+            <div class="cl-node highlight">
+              <span>ERROR / CORRECTION</span>
+              <strong id="cl-error" class="text-orange">Δ = 1.60 mm</strong>
+            </div>
+          </div>
+
+          <!-- Error Convergence Dynamic Progress Bar -->
+          <div class="convergence-container">
+            <div class="conv-header">
+              <span>ПОЗИЦИЯ ҚАТЕЛІГІН ТҮЗЕТУ ДИНАМИКАСЫ (100.00 mm TARGET):</span>
+              <span id="cl-status" class="status-pill status-ready">РЕТТЕЛУДЕ...</span>
+            </div>
+            <div class="conv-bar-bg">
+              <div id="conv-bar-fill" class="conv-bar-fill" style="width: 80%;"></div>
+            </div>
+            <div class="conv-steps">
+              <span>98.40 mm (Δ 1.60 mm)</span>
+              <span>99.20 mm (Δ 0.80 mm)</span>
+              <span>99.75 mm (Δ 0.25 mm)</span>
+              <span>99.95 mm (Δ 0.05 mm)</span>
+              <span class="active">100.00 mm (STABLE Δ 0.00)</span>
+            </div>
+          </div>
+
+          <div class="cl-explanation">
+            <i class="fa-solid fa-quote-left text-orange"></i>
+            <span>Жабық контур (Closed-loop) 23-биттік абсолютті оптикалық энкодер арқылы нақты орынды 1 мс сайын өлшеп, қателікті (Δ = Setpoint - Feedback) жедел түзетеді.</span>
+          </div>
+
+          <button class="action-btn highlight-btn full-width" onclick="servoApp.simulateStepResponse()"><i class="fa-solid fa-play"></i> Позициялау қадамын тесттеу (Step Response Test)</button>
+        </div>
+
+        <!-- Right: G-Code & Extended Industrial Trajectory Program Executor -->
+        <div class="control-panel glass-panel gcode-container-panel">
+          <div class="panel-header">
+            <div>
+              <h3><i class="fa-solid fa-code"></i> G-CODE БАҒДАРЛАМАСЫ ЖӘНЕ КЕСУ ТРАЕКТОРИЯСЫ</h3>
+              <span class="panel-sub-tag">3015NP ӨНДІРІСТІК МУЛЬТИ-БӨЛШЕКТІ КЕСУ ТАПСЫРМАСЫ</span>
+            </div>
+            <span class="badge-mode" id="gcode-status-badge">READY</span>
+          </div>
+
+          <!-- G-Code Execution Metrics Bar -->
+          <div class="gcode-metrics-bar">
+            <div class="g-metric"><span class="lbl">ПРОГРАММА:</span> <strong id="gcode-part-name">SENFENG_BRACKET_MULTI.NC</strong></div>
+            <div class="g-metric"><span class="lbl">ОЗЫҚ БАСЫ:</span> <strong id="gcode-step-counter">00 / 32</strong></div>
+            <div class="g-metric"><span class="lbl">ПРОГРЕСС:</span> <strong id="gcode-progress-percent" class="text-cyan">0%</strong></div>
+            <div class="g-metric"><span class="lbl">КЕСІЛГЕН ҰЗЫНДЫҚ:</span> <strong id="gcode-cut-length">0.0 mm</strong></div>
+          </div>
+
+          <!-- Extended Scrollable G-Code Editor View -->
+          <div class="gcode-editor" id="gcode-editor-list">
+            <!-- Program lines dynamically injected and highlighted by cnc.js -->
+          </div>
+
+          <div class="gcode-actions">
+            <button class="action-btn highlight-btn" id="start-cut-btn" onclick="cncApp.startCuttingProgram()"><i class="fa-solid fa-scissors"></i> [START CUTTING] ТОЛЫҚ КЕСУ ТРАЕКТОРИЯСЫН БАСТАУ</button>
+            <button class="action-btn" onclick="cncApp.stopCuttingProgram()"><i class="fa-solid fa-stop"></i> ТОҚТАТУ</button>
+            <button class="action-btn secondary" onclick="cncApp.resetCuttingProgram()"><i class="fa-solid fa-rotate-left"></i> ҚАЙТА ОРНАТУ</button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== 7. REAL-TIME SCADA & HMI DASHBOARD ==================== -->
+    <section id="scada-hud" class="hud-view">
+      <div class="scada-layout glass-panel">
+        
+        <!-- SCADA Top Status Banner -->
+        <div class="scada-header">
+          <div class="scada-brand">
+            <span class="scada-logo"><i class="fa-solid fa-satellite-dish"></i></span>
+            <div>
+              <h3>SENFENG NP INDUSTRIAL SCADA SYSTEM</h3>
+              <span>Өндірістік диспетчерлік бақылау және басқару жүйесі (SCADA Level 2)</span>
+            </div>
+          </div>
+          <div class="scada-kpis">
+            <div class="kpi-box">
+              <span class="kpi-label">ЖҮЙЕ КҮЙІ</span>
+              <span class="kpi-val status-green" id="scada-main-status">RUNNING (НОРМА)</span>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-label">ETHERCAT ШИНАСЫ</span>
+              <span class="kpi-val">100 Mbps (0 Errors)</span>
+            </div>
+            <div class="kpi-box">
+              <span class="kpi-label">OEE ӨНІМДІЛІК</span>
+              <span class="kpi-val text-cyan">94.8 %</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 Live Real-Time Charts -->
+        <div class="scada-charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">
+              <span><i class="fa-solid fa-chart-line text-cyan"></i> X / Y Осьтерінің жылдамдығы (m/min)</span>
+              <span class="chart-curr-val" id="chart-speed-val">45.2 m/min</span>
+            </div>
+            <div class="canvas-wrap"><canvas id="chart-speed"></canvas></div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">
+              <span><i class="fa-solid fa-bolt text-yellow"></i> Талшықты лазер қуаты (kW)</span>
+              <span class="chart-curr-val" id="chart-power-val">6.0 kW</span>
+            </div>
+            <div class="canvas-wrap"><canvas id="chart-power"></canvas></div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">
+              <span><i class="fa-solid fa-temperature-half text-blue"></i> Чиллер температурасы (°C)</span>
+              <span class="chart-curr-val" id="chart-temp-val">22.4 °C</span>
+            </div>
+            <div class="canvas-wrap"><canvas id="chart-temp"></canvas></div>
+          </div>
+
+          <div class="chart-card">
+            <div class="chart-title">
+              <span><i class="fa-solid fa-wind text-green"></i> Көмекші газ қысымы (bar)</span>
+              <span class="chart-curr-val" id="chart-gas-val">8.2 bar</span>
+            </div>
+            <div class="canvas-wrap"><canvas id="chart-gas"></canvas></div>
+          </div>
+        </div>
+
+        <!-- SCADA Bottom Status Matrix -->
+        <div class="scada-bottom-matrix">
+          <div class="matrix-card">
+            <span class="matrix-label"><i class="fa-solid fa-shield-halved"></i> SAFETY RELAY:</span>
+            <span class="matrix-status ok">SAFE CLOSED</span>
+          </div>
+          <div class="matrix-card">
+            <span class="matrix-label"><i class="fa-solid fa-circle-radiation"></i> STO МОМЕНТ ӨШІРУ:</span>
+            <span class="matrix-status ok">ARMED (ACTIVE)</span>
+          </div>
+          <div class="matrix-card">
+            <span class="matrix-label"><i class="fa-solid fa-water"></i> ЧИЛЛЕР СУ АҒЫНЫ:</span>
+            <span class="matrix-status ok">FLOW 32 L/min</span>
+          </div>
+          <div class="matrix-card">
+            <span class="matrix-label"><i class="fa-solid fa-ruler"></i> СОПЛО БИІКТІГІ:</span>
+            <span class="matrix-status ok">1.00 mm (TRACKING)</span>
+          </div>
+        </div>
+
+    </section>
+
+    <!-- ==================== 8. SAFETY & E-STOP SYSTEM ==================== -->
+    <section id="safety-hud" class="hud-view">
+      <div class="safety-container glass-panel">
+        <div class="safety-header">
+          <div>
+            <h2><i class="fa-solid fa-shield-halved text-red"></i> СТАНОКТЫҢ АППАРАТТЫҚ ҚАУІПСІЗДІК ЖҮЙЕСІ (SAFETY & STO)</h2>
+            <div class="safety-quote">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>«Қауіпсіздік жүйесі негізгі басқару бағдарламасына тәуелді болмауы тиіс!» — Аппараттық деңгейдегі релелік тізбек.</span>
+            </div>
+          </div>
+          <!-- Live Real-Time Section 14 Status Display -->
+          <div class="safety-state-actions-bar">
+            <div class="safety-state-pills">
+              <span class="safe-tag">LASER: <b id="safety-laser-status" class="status-pill status-ready">STANDBY</b></span>
+              <span class="safe-tag">SERVO: <b id="safety-servo-status" class="status-pill status-ready">ENABLED</b></span>
+              <span class="safe-tag">AXIS: <b id="safety-axis-status" class="status-pill status-ready">READY</b></span>
+              <span class="safe-tag">GAS: <b id="safety-gas-status" class="status-pill status-ready">READY</b></span>
+              <span class="safe-tag">ALARM: <b id="safety-alarm-status" class="status-pill status-ready">CLEARED</b></span>
+            </div>
+            <button class="action-btn highlight-btn" onclick="safetyApp.resetSafety()"><i class="fa-solid fa-rotate-right"></i> RESET SAFETY (ҚАЛЫПҚА КЕЛТІРУ)</button>
+          </div>
+        </div>
+
+        <!-- Red Alarm Banner for E-Stop / Trip -->
+        <div id="safety-alarm-banner" class="safety-alarm-banner glass-panel hidden">
+          <i class="fa-solid fa-triangle-exclamation text-red blink"></i>
+          <span>АПАТТЫҚ БЛОКТАУ: E-STOP БАСЫЛДЫ! ЛАЗЕР, СЕРВО STO, ГАЗ АППАРАТТЫҚ ТҮРДЕ ӨШІРІЛДІ.</span>
+          <button class="small-btn highlight" onclick="safetyApp.resetSafety()">ҚАЛЫПҚА КЕЛТІРУ (RESET)</button>
+        </div>
+
+        <div class="safety-grid">
+          <!-- Physical E-Stop Button & Test Trigger -->
+          <div class="estop-trigger-panel">
+            <div class="estop-bezel">
+              <button id="physical-estop-btn" class="physical-estop-btn" onclick="safetyApp.toggleEmergencyStop()">
+                <span>EMERGENCY<br>STOP</span>
+              </button>
+            </div>
+            <span class="estop-hint">АВАРИЯЛЫҚ ТОҚТАТУ БАТЫРМАСЫН БАСЫП КӨРІҢІЗ</span>
+            <div class="estop-status-badge" id="estop-status-text">ЖҮЙЕ ҚАЛЫПТЫ: СЕНІМДІ ТҰЙЫҚТАЛҒАН (NC)</div>
+          </div>
+
+          <!-- Hardware Circuit Flow -->
+          <div class="safety-circuit-board">
+            <div class="circuit-title"><i class="fa-solid fa-diagram-project"></i> ҚОС КАНАЛДЫ ҚАУІПСІЗДІК ТІЗБЕГІ (DUAL-CHANNEL CIRCUIT)</div>
+            
+            <div class="circuit-flow">
+              <div class="circuit-node" id="node-estop">
+                <span class="node-badge">INPUT</span>
+                <h4>E-STOP БАТЫРМАСЫ</h4>
+                <p>2x NC (Қалыпты тұйық) Тізбек</p>
+                <div class="node-state ok">CLOSED (24V)</div>
+              </div>
+
+              <div class="circuit-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+              <div class="circuit-node" id="node-relay">
+                <span class="node-badge">SAFETY PLC</span>
+                <h4>SAFETY RELAY (PILZ/PNOZ)</h4>
+                <p>Екі арнаны қадағалау және рестартты блоктау</p>
+                <div class="node-state ok">ENERGIZED</div>
+              </div>
+
+              <div class="circuit-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+              <div class="circuit-node" id="node-sto">
+                <span class="node-badge">ACTUATION</span>
+                <h4>STO (SAFE TORQUE OFF)</h4>
+                <p>Серводрайвер IGBT күштік моментін өшіру</p>
+                <div class="node-state ok">TORQUE ENABLED</div>
+              </div>
+
+              <div class="circuit-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+
+              <div class="circuit-node" id="node-laser-shutoff">
+                <span class="node-badge">HARDWARE</span>
+                <h4>ЛАЗЕР & ГАЗ БЛОКТАУ</h4>
+                <p>Талшықты лазер резонаторы мен газ клапанын жылдам жабу</p>
+                <div class="node-state ok">PERMITTED</div>
+              </div>
+            </div>
+
+            <div class="safety-log-card" id="safety-log-display">
+              <div class="log-title"><i class="fa-solid fa-terminal"></i> ҚАУІПСІЗДІК РЕЛЕСІНІҢ ХАТТАМАСЫ:</div>
+              <div class="log-content" id="safety-log-text">
+                [OK] Dual safety channels 1 & 2 verified.<br>
+                [OK] Safety Relay contactors closed.<br>
+                [OK] STO inputs high (24V). Axes torque ready.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 9. AUTOMATIC CUTTING CYCLE (13 STEPS) ==================== -->
+    <section id="autocycle-hud" class="hud-view">
+      <div class="autocycle-container glass-panel">
+        <div class="autocycle-header">
+          <div>
+            <h2><i class="fa-solid fa-wand-magic-sparkles text-orange"></i> АВТОМАТТАНДЫРЫЛҒАН КЕСУ ЦИКЛІНІҢ 13 ҚАДАМДЫ АЛГОРИТМІ</h2>
+            <p>Инженерлік автоматтандыру көзқарасымен: бастапқы дайындықтан соңғы қауіпсіз паркингке дейін 3D станокта толық орындау:</p>
+          </div>
+          <button class="action-btn highlight-btn" id="run-cycle-btn" onclick="simulationApp.runAutoCycle()"><i class="fa-solid fa-play"></i> ТОЛЫҚ ЦИКЛДІ БАСТАУ</button>
+        </div>
+
+        <!-- Cycle Progress Bar -->
+        <div class="cycle-progress-wrapper">
+          <div class="cycle-progress-info">
+            <span>ЦИКЛДІҢ ОРЫНДАЛУ ПРОГРЕСІ:</span>
+            <strong id="cycle-progress-percent" class="text-cyan">0%</strong>
+          </div>
+          <div class="cycle-progress-track">
+            <div id="cycle-progress-fill" class="cycle-progress-fill" style="width: 0%;"></div>
+          </div>
+        </div>
+
+        <!-- 13 Step Progress Stepper -->
+        <div class="stepper-horizontal" id="cycle-stepper">
+          <div class="step-badge-item active" data-step-idx="1"><span class="idx">01</span><span class="name">READY</span></div>
+          <div class="step-badge-item" data-step-idx="2"><span class="idx">02</span><span class="name">SAFETY</span></div>
+          <div class="step-badge-item" data-step-idx="3"><span class="idx">03</span><span class="name">HOMING</span></div>
+          <div class="step-badge-item" data-step-idx="4"><span class="idx">04</span><span class="name">LOAD G-CODE</span></div>
+          <div class="step-badge-item" data-step-idx="5"><span class="idx">05</span><span class="name">POSITIONING</span></div>
+          <div class="step-badge-item" data-step-idx="6"><span class="idx">06</span><span class="name">HEIGHT CTRL</span></div>
+          <div class="step-badge-item" data-step-idx="7"><span class="idx">07</span><span class="name">GAS ON</span></div>
+          <div class="step-badge-item" data-step-idx="8"><span class="idx">08</span><span class="name">PIERCING</span></div>
+          <div class="step-badge-item" data-step-idx="9"><span class="idx">09</span><span class="name">CUTTING</span></div>
+          <div class="step-badge-item" data-step-idx="10"><span class="idx">10</span><span class="name">FEEDBACK</span></div>
+          <div class="step-badge-item" data-step-idx="11"><span class="idx">11</span><span class="name">LASER OFF</span></div>
+          <div class="step-badge-item" data-step-idx="12"><span class="idx">12</span><span class="name">GAS OFF</span></div>
+          <div class="step-badge-item" data-step-idx="13"><span class="idx">13</span><span class="name">COMPLETE</span></div>
+        </div>
+
+        <!-- Live Step Execution Card -->
+        <div class="current-step-display glass-panel">
+          <div class="step-exec-header">
+            <span class="step-exec-num" id="exec-step-num">STEP 01 / 13 (0%)</span>
+            <h3 id="exec-step-title">СТАНОКТЫ ДАЙЫНДАУ ЖӘНЕ ҚОРЕКТЕНДІРУДІ ТЕКСЕРУ</h3>
+          </div>
+          <p id="exec-step-desc">Барлық 380V және 24V қорек көздері тексерілді. Чиллер компрессоры қосылып, су температурасы қалыпты 22.4°C-қа жетті.</p>
+          <div class="step-auto-action">
+            <span class="action-label"><i class="fa-solid fa-microchip"></i> АВТОМАТИКА ӘРЕКЕТІ:</span>
+            <span id="exec-step-auto">PLC жүйелік модульдерін (EtherCAT Master, Remote I/O) инициализациялады.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 10. FAULT SIMULATOR & DIAGNOSTICS ==================== -->
+    <section id="faults-hud" class="hud-view">
+      <div class="faults-layout glass-panel">
+        <div class="faults-left">
+          <div class="section-title-box">
+            <h3><i class="fa-solid fa-triangle-exclamation text-yellow"></i> АҚАУЛАР СИМУЛЯТОРЫ ЖӘНЕ ИНЖЕНЕРЛІК ДИАГНОСТИКА</h3>
+            <p>Өндірісте кездесетін 7 негізгі апаттық жағдайды таңдап, станоктың автоматикасы қалай әрекет ететінін көріңіз:</p>
+          </div>
+
+          <div class="fault-buttons-grid">
+            <button class="fault-btn" onclick="faultsApp.triggerFault('encoder_loss')">
+              <i class="fa-solid fa-wave-square"></i>
+              <div>
+                <strong>Энкодер байланысы үзілді</strong>
+                <small>X-Axis Encoder Feedback Loss</small>
+              </div>
+            </button>
+
+            <button class="fault-btn" onclick="faultsApp.triggerFault('servo_overload')">
+              <i class="fa-solid fa-gauge-high"></i>
+              <div>
+                <strong>Серводрайвер шамадан тыс жүктелуі</strong>
+                <small>Y1 Servo Drive Overcurrent / Overload</small>
+              </div>
+            </button>
+
+            <button class="fault-btn" onclick="faultsApp.triggerFault('gas_pressure_low')">
+              <i class="fa-solid fa-wind"></i>
+              <div>
+                <strong>Газ қысымы төмендеді (&lt; 4 bar)</strong>
+                <small>Assist Gas Pressure Switch Tripped</small>
+              </div>
+            </button>
+
+            <button class="fault-btn" onclick="faultsApp.triggerFault('chiller_temp_high')">
+              <i class="fa-solid fa-temperature-arrow-up"></i>
+              <div>
+                <strong>Чиллер температурасы жоғары (&gt;32°C)</strong>
+                <small>Laser Optics Overtemperature Interlock</small>
+              </div>
+            </button>
+
+            <button class="fault-btn" onclick="faultsApp.triggerFault('door_open')">
+              <i class="fa-solid fa-door-open"></i>
+              <div>
+                <strong>Қорғаныс есігі ашылды</strong>
+                <small>Door Interlock Open / STO Active</small>
+              </div>
+            </button>
+
+            <button class="fault-btn" onclick="faultsApp.triggerFault('capacitive_error')">
+              <i class="fa-solid fa-bullseye"></i>
+              <div>
+                <strong>Биіктік датчигі қаңылтырға соғылды</strong>
+                <small>Capacitive Nozzle Collision Alarm</small>
+              </div>
+            </button>
+
+            <button class="fault-btn" onclick="faultsApp.triggerFault('estop_tripped')">
+              <i class="fa-solid fa-shield-virus"></i>
+              <div>
+                <strong>Авариялық E-Stop басылды</strong>
+                <small>Hardware Safety Circuit Open</small>
+              </div>
+            </button>
+          </div>
+
+          <button class="action-btn highlight-btn reset-fault-btn" onclick="faultsApp.resetAllFaults()"><i class="fa-solid fa-rotate"></i> БАРЛЫҚ АҚАУЛАРДЫ БАСЫП ҚАЛЫПҚА КЕЛТІРУ (RESET ALARMS)</button>
+        </div>
+
+        <!-- Right: Diagnostic Expert System & Alarm Log -->
+        <div class="faults-right">
+          <div class="diagnostic-card">
+            <h4><i class="fa-solid fa-stethoscope"></i> Инженерлік Диагностикалық Сұлбасы</h4>
+            <div id="diag-flow-box" class="diag-flow-box">
+              <div class="diag-step"><span class="diag-lbl">СИМПТОМ:</span> <span id="diag-symptom">Жүйе қалыпты жұмыс істеп тұр</span></div>
+              <div class="diag-step"><span class="diag-lbl">АЛАРМ КОДЫ:</span> <span id="diag-code">ALARM 000: SYSTEM READY</span></div>
+              <div class="diag-step"><span class="diag-lbl">АВТОМАТИКА ӘРЕКЕТІ:</span> <span id="diag-action">Автоматты блоктау қажет етілмейді</span></div>
+              <div class="diag-step highlight"><span class="diag-lbl">ЖӨНДЕУ ТӘСІЛІ:</span> <span id="diag-fix">Кабель экраны, жерге қосу (PE), 24V тұрақтылықты бақылау.</span></div>
+            </div>
+          </div>
+
+          <!-- SCADA Alarm History Table -->
+          <div class="alarm-history-card">
+            <h4><i class="fa-solid fa-clock-rotate-left"></i> SCADA Дабылдар тарихы (Alarm Log)</h4>
+            <ul class="alarm-log-list" id="alarm-log-list">
+              <li class="log-item ok"><span class="time">20:30:15</span> [INFO] Жүйе іске қосылды. Барлық сенсорлар OK.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== 11. CINEMATIC PRESENTATION STORYTELLING MODE ==================== -->
+    <section id="presentation-hud" class="hud-view">
+      <div class="presentation-carousel-container">
+        
+        <!-- Top Presentation Navigation Bar -->
+        <div class="pres-top-bar glass-panel">
+          <div class="pres-title">
+            <i class="fa-solid fa-graduation-cap text-cyan"></i>
+            <div>
+              <span class="pres-header-main">ИНЖЕНЕРЛІК ДИДЖИТАЛ ЕГІЗ ПРЕЗЕНТАЦИЯСЫ</span>
+              <span class="pres-header-sub">SENFENG NP 3015 // ИНЖЕНЕРЛІК АВТОМАТТАНДЫРУ ЖӘНЕ БАСҚАРУ</span>
+            </div>
+          </div>
+          <div class="pres-progress">
+            <span id="pres-slide-counter">СЛАЙД 01 / 12</span>
+            <div class="pres-progress-bar"><div id="pres-progress-fill" style="width: 8%;"></div></div>
+          </div>
+          <div class="pres-nav-btns">
+            <button class="pres-ctrl-btn" id="pres-prev-btn" onclick="presentationApp.prevSlide()" title="Алдыңғы слайд (← пернесі)"><i class="fa-solid fa-arrow-left"></i> Артқа</button>
+            <button class="pres-ctrl-btn highlight" id="pres-next-btn" onclick="presentationApp.nextSlide()" title="Келесі слайд (→ немесе Пробел)">Келесі <i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+        </div>
+
+        <!-- Slide Content Display Wrapper (Side Docked Presentation Card) -->
+        <div class="pres-content-layout">
+          <!-- Main Slide Card with High Contrast Background -->
+          <div class="pres-card glass-panel" id="pres-card">
+            <div class="pres-card-header">
+              <span class="pres-section-tag" id="pres-section-tag">01 — КІРІСПЕ ЖӘНЕ ТАҚЫРЫП</span>
+              <h2 id="pres-heading">Лазерлік CNC станогын автоматтандыру</h2>
+            </div>
+            <div class="pres-card-body" id="pres-body">
+              <!-- Dynamic slide content populated by presentation.js -->
+            </div>
+            <div class="pres-card-footer">
+              <div class="pres-tip"><i class="fa-solid fa-video text-cyan"></i> <span id="pres-cam-hint">Камера автоматты түрде тақырыпқа сай 3D бөлшекке жақындайды</span></div>
+              <div class="pres-hotkeys-hint"><kbd>←</kbd> <kbd>→</kbd> <kbd>Space</kbd> ауыстыру | <kbd>R</kbd> сброс</div>
+            </div>
+          </div>
+
+          <!-- Quick Slide Jump Pill Grid -->
+          <div class="pres-quick-jump glass-panel" id="pres-quick-jump">
+            <span class="jump-title"><i class="fa-solid fa-list-ol"></i> СЛАЙДТАР ТІЗІМІ:</span>
+            <div class="jump-pills-grid" id="jump-pills-grid">
+              <!-- Injected by presentation.js -->
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== 12. ADVANCED COMMISSIONING & ENGINEERING I/O TERMINAL ==================== -->
+    <div id="engineering-modal" class="engineering-modal glass-panel hidden">
+      <div class="eng-modal-header">
+        <div class="eng-modal-title"><i class="fa-solid fa-terminal text-green"></i> ИНЖЕНЕРЛІК БАПТАУ ЖӘНЕ I/O ДИАГНОСТИКА МОНИТОРЫ</div>
+        <button class="panel-close-btn" onclick="app.toggleEngineeringMode()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="eng-grid">
+        <!-- Digital Inputs Bits -->
+        <div class="eng-card">
+          <h4>ДИСКРЕТТІ КІРІСТЕР (DIGITAL INPUTS - 24V DC)</h4>
+          <div class="bits-grid">
+            <div class="bit-item on"><span class="bit-name">DI 0.0</span><span class="bit-desc">E-Stop OK</span></div>
+            <div class="bit-item on"><span class="bit-name">DI 0.1</span><span class="bit-desc">Door Closed</span></div>
+            <div class="bit-item on"><span class="bit-name">DI 0.2</span><span class="bit-desc">Chiller Ready</span></div>
+            <div class="bit-item on"><span class="bit-name">DI 0.3</span><span class="bit-desc">Gas Press OK</span></div>
+            <div class="bit-item off"><span class="bit-name">DI 0.4</span><span class="bit-desc">X+ Limit SW</span></div>
+            <div class="bit-item off"><span class="bit-name">DI 0.5</span><span class="bit-desc">X- Limit SW</span></div>
+            <div class="bit-item off"><span class="bit-name">DI 0.6</span><span class="bit-desc">Y+ Limit SW</span></div>
+            <div class="bit-item off"><span class="bit-name">DI 0.7</span><span class="bit-desc">Y- Limit SW</span></div>
+          </div>
+        </div>
+
+        <!-- Digital Outputs Bits -->
+        <div class="eng-card">
+          <h4>ДИСКРЕТТІ ШЫҒЫСТАР (DIGITAL OUTPUTS - 24V DC)</h4>
+          <div class="bits-grid">
+            <div class="bit-item on"><span class="bit-name">DO 0.0</span><span class="bit-desc">Main Power Contactor</span></div>
+            <div class="bit-item on"><span class="bit-name">DO 0.1</span><span class="bit-desc">Servo Ready Enable</span></div>
+            <div class="bit-item on"><span class="bit-name">DO 0.2</span><span class="bit-desc">Laser Shutter Enable</span></div>
+            <div class="bit-item on"><span class="bit-name">DO 0.3</span><span class="bit-desc">N2 Gas Valve Solenoid</span></div>
+            <div class="bit-item off"><span class="bit-name">DO 0.4</span><span class="bit-desc">O2 Gas Valve Solenoid</span></div>
+            <div class="bit-item off"><span class="bit-name">DO 0.5</span><span class="bit-desc">Exhaust Blower Fan</span></div>
+            <div class="bit-item off"><span class="bit-name">DO 0.6</span><span class="bit-desc">Alarm Red Beacon</span></div>
+            <div class="bit-item on"><span class="bit-name">DO 0.7</span><span class="bit-desc">Status Green Tower</span></div>
+          </div>
+        </div>
+
+        <!-- Analog I/O -->
+        <div class="eng-card">
+          <h4>АНАЛОГТЫҚ КІРІС/ШЫҒЫС (ANALOG I/O)</h4>
+          <div class="analog-list">
+            <div class="analog-item"><span>AI0 (Capacitive Height):</span> <b>5.00 V (1.00 mm)</b></div>
+            <div class="analog-item"><span>AI1 (Chiller Laser Temp):</span> <b>4.82 mA (22.4 °C)</b></div>
+            <div class="analog-item"><span>AI2 (Gas Pressure Sensor):</span> <b>12.4 mA (8.2 bar)</b></div>
+            <div class="analog-item"><span>AO0 (Laser Power DAC):</span> <b>6.00 V (6.0 kW)</b></div>
+          </div>
+        </div>
+
+        <!-- Bus Telemetry -->
+        <div class="eng-card">
+          <h4>ETHERCAT MOTION TELEMETRY</h4>
+          <div class="telemetry-box">
+            <div><span>Master State:</span> <b class="text-green">OP (OPERATIONAL)</b></div>
+            <div><span>Sync Cycle:</span> <b>1000 µs (Jitter &lt; 2 µs)</b></div>
+            <div><span>X-Drive Mode:</span> <b>CSP (Cyclic Sync Position)</b></div>
+            <div><span>Encoder CRC:</span> <b class="text-green">PASS</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 13. LARGE HMI / OPERATOR COMPUTER MODAL (SECTION 8) ==================== -->
+    <div id="hmi-modal" class="hmi-modal glass-panel hidden">
+      <div class="hmi-frame">
+        <div class="hmi-bezel-top">
+          <div class="hmi-brand"><i class="fa-solid fa-desktop text-cyan"></i> SENFENG INDUSTRIAL PC // OPERATOR WORKSTATION 24"</div>
+          <div class="hmi-power-indicator"><span class="hmi-led green"></span> IPC ONLINE (Intel Core i7 / Real-Time RTOS)</div>
+          <button class="panel-close-btn" onclick="app.toggleHmiModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="hmi-screen">
+          <div class="hmi-screen-header">
+            <div class="hmi-dash-title">SENFENG INDUSTRIAL CNC DASHBOARD</div>
+            <span class="hmi-status-pill status-ready" id="hmi-status-state"><i class="fa-solid fa-circle-check"></i> MACHINE STATUS: READY</span>
+          </div>
+
+          <div class="hmi-screen-grid">
+            <!-- Coordinates -->
+            <div class="hmi-box">
+              <div class="hmi-box-title"><i class="fa-solid fa-arrows-up-down-left-right"></i> КООРДИНАТАЛАР (AXES DRO)</div>
+              <div class="hmi-coord-row"><span class="hmi-axis x">X</span><span class="hmi-val" id="hmi-val-x">1250.25</span><span class="hmi-unit">mm</span></div>
+              <div class="hmi-coord-row"><span class="hmi-axis y">Y</span><span class="hmi-val" id="hmi-val-y">730.40</span><span class="hmi-unit">mm</span></div>
+              <div class="hmi-coord-row"><span class="hmi-axis z">Z</span><span class="hmi-val" id="hmi-val-z">18.20</span><span class="hmi-unit">mm</span></div>
+            </div>
+
+            <!-- Cutting Dynamics -->
+            <div class="hmi-box">
+              <div class="hmi-box-title"><i class="fa-solid fa-sliders"></i> КЕСУ ПАРАМЕТРЛЕРІ (PROCESS)</div>
+              <div class="hmi-param-row"><span>CUT SPEED:</span> <strong id="hmi-val-speed">8500</strong> <small>mm/min</small></div>
+              <div class="hmi-param-row"><span>LASER:</span> <strong id="hmi-val-laser">65.0</strong> <small>%</small></div>
+              <div class="hmi-param-row"><span>GAS:</span> <strong id="hmi-val-gas">1.20</strong> <small>MPa</small></div>
+              <div class="hmi-param-row"><span>CHILLER:</span> <strong id="hmi-val-chiller">22.4</strong> <small>°C</small></div>
+            </div>
+
+            <!-- Subsystems Status -->
+            <div class="hmi-box full-col">
+              <div class="hmi-box-title"><i class="fa-solid fa-microchip"></i> ЖЕТЕК ЖӘНЕ ҚАУІПСІЗДІК КҮЙІ (SUBSYSTEMS)</div>
+              <div class="hmi-subsys-row">
+                <span class="hmi-pill ready"><i class="fa-solid fa-check"></i> SERVO X READY</span>
+                <span class="hmi-pill ready"><i class="fa-solid fa-check"></i> SERVO Y READY</span>
+                <span class="hmi-pill ready"><i class="fa-solid fa-check"></i> SERVO Z READY</span>
+                <span class="hmi-pill ready"><i class="fa-solid fa-shield-halved"></i> SAFETY OK</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== 14. MINIMAL 12-CHAPTER DOCK (SECTION 18) ==================== -->
+    <nav id="chapter-dock" class="chapter-dock glass-panel" aria-label="Презентация бөлімдері">
+      <button class="chap-btn active" data-chapter="0" title="01 OVERVIEW"><span class="c-num">01</span><span class="c-title">OVERVIEW</span></button>
+      <button class="chap-btn" data-chapter="1" title="02 MACHINE"><span class="c-num">02</span><span class="c-title">MACHINE</span></button>
+      <button class="chap-btn" data-chapter="2" title="03 MOTION"><span class="c-num">03</span><span class="c-title">MOTION</span></button>
+      <button class="chap-btn" data-chapter="3" title="04 SERVO"><span class="c-num">04</span><span class="c-title">SERVO</span></button>
+      <button class="chap-btn" data-chapter="4" title="05 CNC / PLC"><span class="c-num">05</span><span class="c-title">CNC / PLC</span></button>
+      <button class="chap-btn" data-chapter="5" title="06 HMI"><span class="c-num">06</span><span class="c-title">HMI</span></button>
+      <button class="chap-btn" data-chapter="6" title="07 SENSORS"><span class="c-num">07</span><span class="c-title">SENSORS</span></button>
+      <button class="chap-btn" data-chapter="7" title="08 LASER"><span class="c-num">08</span><span class="c-title">LASER</span></button>
+      <button class="chap-btn" data-chapter="8" title="09 SCADA"><span class="c-num">09</span><span class="c-title">SCADA</span></button>
+      <button class="chap-btn" data-chapter="9" title="10 SAFETY"><span class="c-num">10</span><span class="c-title">SAFETY</span></button>
+      <button class="chap-btn" data-chapter="10" title="11 DIAGNOSTICS"><span class="c-num">11</span><span class="c-title">DIAGNOSTICS</span></button>
+      <button class="chap-btn" data-chapter="11" title="12 CONCLUSION"><span class="c-num">12</span><span class="c-title">CONCLUSION</span></button>
+    </nav>
+
+
+
+  </main>
+
+  <!-- Sound Synth Script -->
+  <script>
+    // Web Audio synthesizer for subtle industrial feedback
+    const SoundFX = {
+      ctx: null,
+      enabled: true,
+      init() {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        } catch (e) { console.warn('Audio not available'); }
+      },
+      beep(freq = 440, type = 'sine', duration = 0.08, vol = 0.05) {
+        if (!this.enabled || !this.ctx) return;
+        if (this.ctx.state === 'suspended') this.ctx.resume();
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+          gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch(e) {}
+      },
+      click() { this.beep(1200, 'sine', 0.04, 0.03); },
+      alarm() { this.beep(400, 'sawtooth', 0.25, 0.08); },
+      laserPulse() { this.beep(800, 'triangle', 0.12, 0.05); }
+    };
+    document.addEventListener('click', () => { if (!SoundFX.ctx) SoundFX.init(); }, { once: true });
+  </script>
+
+  <!-- Modular Application Scripts -->
+  <script src="js/camera.js"></script>
+  <script src="js/machine.js"></script>
+  <script src="js/scene3d.js"></script>
+  <script src="js/axes.js"></script>
+  <script src="js/laser.js"></script>
+  <script src="js/sensors.js"></script>
+  <script src="js/servo.js"></script>
+  <script src="js/encoder.js"></script>
+  <script src="js/plc.js"></script>
+  <script src="js/cnc.js"></script>
+  <script src="js/gas.js"></script>
+  <script src="js/chiller.js"></script>
+  <script src="js/safety.js"></script>
+  <script src="js/scada.js"></script>
+  <script src="js/simulation.js"></script>
+  <script src="js/faults.js"></script>
+  <script src="js/presentation.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

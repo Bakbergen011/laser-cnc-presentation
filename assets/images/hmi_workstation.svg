@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300" width="100%" height="100%">
+  <defs>
+    <linearGradient id="monitorBezel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b"/>
+      <stop offset="100%" stop-color="#090d16"/>
+    </linearGradient>
+    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#060c18"/>
+      <stop offset="100%" stop-color="#02050c"/>
+    </linearGradient>
+    <linearGradient id="standGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#334155"/>
+      <stop offset="50%" stop-color="#64748b"/>
+      <stop offset="100%" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="520" height="300" fill="#080c14" rx="8" stroke="#1e293b" stroke-width="1"/>
+
+  <!-- Top Title Banner -->
+  <rect x="15" y="10" width="490" height="24" fill="rgba(0,240,255,0.08)" rx="4" stroke="rgba(0,240,255,0.25)" stroke-width="1"/>
+  <text x="25" y="26" font-family="'JetBrains Mono', monospace" font-size="10.5" font-weight="bold" fill="#00f0ff">INDUSTRIAL PC // OPERATOR WORKSTATION & CNC HMI CONSOLE</text>
+
+  <!-- Monitor Swivel Heavy Arm & Stand -->
+  <rect x="245" y="210" width="30" height="40" fill="url(#standGrad)" rx="2" stroke="#475569" stroke-width="1"/>
+  <rect x="190" y="248" width="140" height="12" fill="#1e293b" rx="3" stroke="#475569" stroke-width="1.5"/>
+
+  <!-- Large 24" Monitor Outer Bezel -->
+  <rect x="25" y="42" width="470" height="185" rx="8" fill="url(#monitorBezel)" stroke="#334155" stroke-width="2"/>
+  
+  <!-- Active CNC Screen Display -->
+  <rect x="35" y="50" width="450" height="152" rx="4" fill="url(#screenGrad)" stroke="#00f0ff" stroke-width="1"/>
+
+  <!-- HMI Screen Top Bar -->
+  <rect x="35" y="50" width="450" height="22" fill="#0f172a"/>
+  <text x="45" y="65" font-family="'Orbitron', sans-serif" font-size="10" fill="#ff9100" font-weight="bold">SENFENG 3015NP CNC SYSTEM</text>
+  
+  <!-- MACHINE STATUS: READY -->
+  <rect x="340" y="53" width="135" height="15" fill="#065f46" rx="3" stroke="#10b981" stroke-width="1"/>
+  <text x="348" y="64" font-family="'JetBrains Mono', monospace" font-size="8.5" fill="#ffffff" font-weight="bold">● STATUS: READY</text>
+
+  <!-- Left Screen Column: DRO Coordinates Readout -->
+  <g transform="translate(45, 80)">
+    <rect width="135" height="114" fill="#020617" rx="4" stroke="#1e293b" stroke-width="1"/>
+    <text x="8" y="16" font-family="'JetBrains Mono', monospace" font-size="8" fill="#94a3b8">ABSOLUTE COORDINATES</text>
+    
+    <text x="10" y="38" font-family="'Orbitron', monospace" font-size="13" fill="#00f0ff" font-weight="bold">X: 1250.25</text>
+    <text x="108" y="38" font-family="'JetBrains Mono', monospace" font-size="8" fill="#64748b">mm</text>
+
+    <text x="10" y="62" font-family="'Orbitron', monospace" font-size="13" fill="#10b981" font-weight="bold">Y:  730.40</text>
+    <text x="108" y="62" font-family="'JetBrains Mono', monospace" font-size="8" fill="#64748b">mm</text>
+
+    <text x="10" y="86" font-family="'Orbitron', monospace" font-size="13" fill="#f59e0b" font-weight="bold">Z:   18.20</text>
+    <text x="108" y="86" font-family="'JetBrains Mono', monospace" font-size="8" fill="#64748b">mm</text>
+
+    <line x1="8" y1="94" x2="127" y2="94" stroke="#1e293b"/>
+    <text x="10" y="106" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#00f0ff">FEED: 8500 mm/min</text>
+  </g>
+
+  <!-- Center Screen: 2D Part Toolpath Simulation View -->
+  <g transform="translate(190, 80)">
+    <rect width="150" height="114" fill="#020617" rx="4" stroke="#1e293b" stroke-width="1"/>
+    <!-- Grid -->
+    <path d="M 0 28 L 150 28 M 0 56 L 150 56 M 0 84 L 150 84 M 37 0 L 37 114 M 75 0 L 75 114 M 112 0 L 112 114" stroke="#0a1526" stroke-width="1"/>
+    <!-- Part geometry toolpath -->
+    <rect x="25" y="25" width="95" height="65" rx="10" fill="none" stroke="#00f0ff" stroke-width="1.8"/>
+    <circle cx="72" cy="57" r="14" fill="none" stroke="#ff9100" stroke-width="1.5"/>
+    <!-- Laser position crosshair -->
+    <circle cx="95" cy="40" r="4" fill="#ef4444"/>
+    <line x1="85" y1="40" x2="105" y2="40" stroke="#ef4444" stroke-width="1"/>
+    <line x1="95" y1="30" x2="95" y2="50" stroke="#ef4444" stroke-width="1"/>
+    <text x="8" y="106" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#94a3b8">TOOLPATH: 2D SIMULATION</text>
+  </g>
+
+  <!-- Right Screen: Process Telemetry & Safety Status -->
+  <g transform="translate(350, 80)">
+    <rect width="125" height="114" fill="#020617" rx="4" stroke="#1e293b" stroke-width="1"/>
+    <text x="8" y="14" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#f59e0b" font-weight="bold">PROCESS & DIAGNOSTICS</text>
+
+    <text x="8" y="30" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#cbd5e1">LASER PWR: <b fill="#ff9100">65% (6kW)</b></text>
+    <text x="8" y="44" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#cbd5e1">GAS PRESS: <b fill="#10b981">1.2 MPa N2</b></text>
+    <text x="8" y="58" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#cbd5e1">CHILLER: <b fill="#00f0ff">22.4°C OK</b></text>
+    <text x="8" y="72" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#cbd5e1">SERVO X/Y: <b fill="#10b981">READY</b></text>
+    <text x="8" y="86" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#cbd5e1">SERVO Z: <b fill="#10b981">AUTO GAP</b></text>
+    
+    <rect x="8" y="93" width="109" height="14" fill="#065f46" rx="2"/>
+    <text x="14" y="103" font-family="'JetBrains Mono', monospace" font-size="7.5" fill="#ffffff" font-weight="bold">SAFETY: ALL ARMED OK</text>
+  </g>
+
+  <!-- Operator Tray: Keyboard, Touchpad & Physical Emergency Stop Mushroom -->
+  <g transform="translate(100, 260)">
+    <rect width="320" height="30" fill="#1e293b" rx="4" stroke="#475569" stroke-width="1.5"/>
+    <!-- Keyboard Keys simulation -->
+    <rect x="20" y="8" width="180" height="14" fill="#0f172a" rx="2"/>
+    <!-- Mouse / Touchpad -->
+    <rect x="215" y="8" width="35" height="14" fill="#0f172a" rx="2"/>
+    <!-- Physical E-Stop Button -->
+    <circle cx="285" cy="15" r="11" fill="#facc15" stroke="#ca8a04" stroke-width="1.5"/>
+    <circle cx="285" cy="15" r="7.5" fill="#ef4444" stroke="#991b1b" stroke-width="1.5"/>
+  </g>
+</svg>
